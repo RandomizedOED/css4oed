@@ -495,7 +495,7 @@ def randcssp(A, k, typ='qr', p=None, q=None, l=None, beta=None, rseed=None):
     d     = k + p
     Omega = (1/np.sqrt(d)) * np.random.randn(d, m)
     Vkt   = Omega @ A
-  else
+  else:
     _, _, Vkt = randsvd(A, k, p, q)
 
   # Get the columns out
