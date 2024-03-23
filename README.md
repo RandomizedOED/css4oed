@@ -7,8 +7,9 @@ The [MATLAB](matlab/) code relies on the following packages to setup the test pr
 1. [IR Tools](https://github.com/jnagy1/IRtools)
 2. [AIR Tools II](https://github.com/jakobsj/AIRToolsII)
 
-The [Python](python/) requires the following packages for test problems.
+The [Python](python/) code requires the following packages for test problems.
 1. [PyOED](https://gitlab.com/ahmedattia/pyoed)
+2. [GPy](https://github.com/SheffieldML/GPy)
  
 ## Licence
 To use these codes in your research, please see the [License](LICENSE). If you find our code useful, please consider citing our paper.
@@ -20,6 +21,8 @@ To use these codes in your research, please see the [License](LICENSE). If you f
   year={2024}
 }
 ```
+All figures and data from this paper can be generated via the scripts in [paper\_figure](paper_figures/).
+
 ## Funding
 This work was supported was supported, in part, by the National Science Foundation through the award DMS-1845406 and
 the Department of Energy through the awards DE-SC0023188 and DE-AC02-06CH11357.
