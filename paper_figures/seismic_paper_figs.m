@@ -25,7 +25,7 @@ save_figs = true;
 
 out_dir  = "./results";
 expname  = "prseismic";
-tstamp   = string(datetime("now", "Format", "y.MM.d'T'HH:MM"));
+tstamp   = string(datetime("now", "Format", "y.MM.d'T'HH:mm"));
 
 if (save_file)
   out_file = fullfile(out_dir,strcat(expname,"-",tstamp,'.mat'));
@@ -177,7 +177,7 @@ for kidx=1:length(num_sensors)
 
 
   % Greedy
-  [~, gd_dopt, S_gd, ~] = greedydopt(Apr, k);
+  [~, gd_dopt, S_gd, ~] = greedydopt_mf(Apr, k);
   [x_gd, ~, ~, ~, ~]    = solve_invprob(F, Gn, Gp_inv, bn, mu, kalpha,...
                                 S_gd', use_cg);
   gd_rerr               = norm(x_gd - xt)/norm(xt);
