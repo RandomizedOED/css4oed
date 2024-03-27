@@ -13,20 +13,27 @@ retspmat = true;      % matrix return type
 
 kappa2  = 80;    % prior nugget
 alpha   = 0.1;   % regularization parameter
-densify = false; % form the forward operator
 npct    = 0.02;  % noise percentage
 use_cg  = false; % Solver options
 
 %% Output params
 save_file = true;
+save_figs = true;
 
 out_dir  = "./results";
 expname  = "prseismic-timing";
-tstamp   = string(datetime("now", "Format", "y.MM.d'T'HH:MM"));
+tstamp   = string(datetime("now", "Format", "y.MM.d'T'HH:mm"));
 
 if (save_file)
   out_file = fullfile(out_dir,strcat(expname,"-",tstamp,'.mat'));
   fprintf("Saving data at : %s\n", out_file);
+end
+
+if (save_figs)
+  fig_dir          = fullfile(out_dir, strcat(expname,"-figs-",tstamp));
+  [st, msg, msgID] = mkdir(fig_dir);
+  assert(st, "Error creating figures folder.");
+  fprintf("Saving figures at : %s\n", fig_dir);
 end
 
 %% Setup the 2D seismic problem
@@ -62,11 +69,6 @@ x = linspace(0,1,n);
 y = linspace(0,1,n);
 [X,Y] = meshgrid(x,y);
 
-% Densify the operators if needed
-if (densify)
-  F = full(F);
-end
-
 %% Form the preconditioned operator
 % Prior stuff
 Gp_inv  = K*(M\K);
@@ -83,11 +85,16 @@ Apr = funMat(@(x) (sqrt(alpha)/sigma)*(R*(K\(F'*x))),...
               [size(F,2), size(F,1)]);
 
 %% Timing parameters
-num_sensors = [10 50]; % Number of sensors to select
-rsvd_p      = 20;      % Oversampling for randsvd
-rsvd_qs     = [0 1 2]; % Subspace iterations for randsvd
+m           = size(Apr, 2); % Number of candidates
+num_sensors = [10 50];      % Number of sensors to select
+rsvd_p      = 20;           % Oversampling for randsvd
+rsvd_qs     = 1;            % Subspace iterations for randsvd
+densify     = true;         % Make the operator dense
+nruns       = 10;           % Number of runs to average
 
-nruns = 10;
+if (densify)
+  Apr = Apr*eye(m);
+end
 
 %% Time the operators
 fwop_times = zeros(nruns, 1);
@@ -118,6 +125,7 @@ end
 qr_times = zeros(length(num_sensors), length(rsvd_qs), nruns);
 hy_times = zeros(length(num_sensors), length(rsvd_qs), nruns);
 gd_times = zeros(length(num_sensors), length(rsvd_qs), nruns);
+gf_times = zeros(length(num_sensors), length(rsvd_qs), nruns);
 af_times = zeros(length(num_sensors), length(rsvd_qs), nruns);
 
 for kk = 1:length(num_sensors)
@@ -153,6 +161,15 @@ for kk = 1:length(num_sensors)
       gd_times(kk, qq, ii) = toc;
     end
 
+    % Time Greedy (matrix-free)
+    fprintf("Working on Greedy (matrix-free).\n");
+
+    for ii=1:nruns
+      tic;
+      [gf_idx, ~, ~, ~] = greedydopt_mf(Apr, k);
+      gf_times(kk, qq, ii) = toc;
+    end
+
     % Time Adjoint-free
     fprintf("Working on Adjoint-free.\n");
 
@@ -170,7 +187,7 @@ for kk = 1:length(num_sensors)
   end
 end
 
-%% Display times
+%% Aggregate times
 med_times = cell(length(num_sensors), length(rsvd_qs));
 min_times = cell(length(num_sensors), length(rsvd_qs));
 max_times = cell(length(num_sensors), length(rsvd_qs));
@@ -187,31 +204,37 @@ for kk = 1:length(num_sensors)
     med_times{kk, qq} = [median(qr_times(kk, qq, :)), ...
                          median(hy_times(kk, qq, :)), ...
                          median(gd_times(kk, qq, :)), ...
+                         median(gf_times(kk, qq, :)), ...
                          median(af_times(kk, qq, :))];
 
     min_times{kk, qq} = [min(qr_times(kk, qq, :)), ...
                          min(hy_times(kk, qq, :)), ...
                          min(gd_times(kk, qq, :)), ...
+                         min(gf_times(kk, qq, :)), ...
                          min(af_times(kk, qq, :))];
 
     max_times{kk, qq} = [max(qr_times(kk, qq, :)), ...
                          max(hy_times(kk, qq, :)), ...
                          max(gd_times(kk, qq, :)), ...
+                         max(gf_times(kk, qq, :)), ...
                          max(af_times(kk, qq, :))];
   
     avg_times{kk, qq} = [mean(qr_times(kk, qq, :)), ...
                          mean(hy_times(kk, qq, :)), ...
                          mean(gd_times(kk, qq, :)), ...
+                         mean(gf_times(kk, qq, :)), ...
                          mean(af_times(kk, qq, :))];
 
     std_times{kk, qq} = [std(qr_times(kk, qq, :)), ...
                          std(hy_times(kk, qq, :)), ...
                          std(gd_times(kk, qq, :)), ...
+                         std(gf_times(kk, qq, :)), ...
                          std(af_times(kk, qq, :))];
   
-    num_mvs{kk, qq}   = [(2*rsvd_q+1)*(k + rsvd_p), ...
-                         (2*rsvd_q+1)*(k + rsvd_p), ...
-                         size(Apr, 2), ...
+    num_mvs{kk, qq}   = [(2*rsvd_q+2)*(k + rsvd_p), ...
+                         (2*rsvd_q+2)*(k + rsvd_p), ...
+                         m, ...
+                         0.5*(k*(2*m - k + 1)), ...
                          (k + rsvd_p)];
 
   end
@@ -251,10 +274,75 @@ for kk = 1:length(num_sensors)
                med_times{kk, qq}(3), min_times{kk, qq}(3), ...
                max_times{kk, qq}(3), avg_times{kk, qq}(3), ...
                std_times{kk, qq}(3), num_mvs{kk, qq}(3));
-    fprintf("Adjfree    %8.4f %8.4f %8.4f %8.4f %5.4f %d\n", ...
+    fprintf("Greedy (F) %8.4f %8.4f %8.4f %8.4f %5.4f %d\n", ...
                med_times{kk, qq}(4), min_times{kk, qq}(4), ...
                max_times{kk, qq}(4), avg_times{kk, qq}(4), ...
                std_times{kk, qq}(4), num_mvs{kk, qq}(4));
+    fprintf("Adjfree    %8.4f %8.4f %8.4f %8.4f %5.4f %d\n", ...
+               med_times{kk, qq}(5), min_times{kk, qq}(5), ...
+               max_times{kk, qq}(5), avg_times{kk, qq}(5), ...
+               std_times{kk, qq}(5), num_mvs{kk, qq}(5));
     fprintf("\n\n");
   end
+end
+
+%% Plot a matvecs vs k plot
+mv_rsvd = @(k, p, q) (2*q + 2)*(k + p); 
+mv_af   = @(k, p) k+p;
+mv_gd   = @(k, m) (m*k) + (k/2) - (k.^2/2);
+
+% Figure parameters
+plot_cols = 1:50;
+plot_p    = 20;
+plot_qs   = [0 1 2];
+
+% Figure properties
+rect    = [0, 0, 8, 6];
+fsize   = 16;
+lwidth  = 1.5;
+labsize = 16;
+ttlsize = 20;
+
+figure;
+set(gcf, 'units', 'inches');
+set(gcf, 'Position', rect);
+set(gcf, 'OuterPosition',rect);
+set(gcf, 'PaperPositionMode', 'auto');
+set(gcf, 'defaultaxesfontsize', fsize);
+set(gcf, 'defaulttextfontsize', fsize);
+
+% GKS methods
+for plot_q = plot_qs
+  semilogy(plot_cols, mv_rsvd(plot_cols, plot_p, plot_q), 'o-' ,...
+      'DisplayName', sprintf("GKS (p = %d, q = %d)", plot_p, plot_q), ...
+      'LineWidth', lwidth);
+  hold on;
+end
+
+% Adjoint-free method
+semilogy(plot_cols, mv_af(plot_cols, plot_p), 'x-', ...
+     'LineWidth', lwidth, ...
+     'DisplayName', sprintf("RAF (p = %d)", plot_p));
+hold on;
+
+% Greedy method
+semilogy(plot_cols, mv_gd(plot_cols, m), 's-', ...
+  'LineWidth', lwidth, 'DisplayName', "Greedy");
+hold on;
+
+% Densifying the matrix
+semilogy(plot_cols, m*ones(length(plot_cols), 1), 'k--', ...
+  'LineWidth', lwidth, 'DisplayName', 'Dense');
+
+title("Seismic", 'FontSize', ttlsize);
+xlabel("Number of sensors", 'FontSize', labsize);
+ylabel("Number of PDE solves", 'FontSize', labsize);
+legend('NumColumns', 2, 'Location', 'northwest');
+
+if (save_figs)
+  figname = sprintf("mvscl-%d", max(plot_cols));
+  export_fig(fullfile(fig_dir,figname), "-png", "-transparent");
+  export_fig(fullfile(fig_dir,figname), "-pdf", "-transparent");
+  print(fullfile(fig_dir,figname), "-depsc");
+  close all;
 end
