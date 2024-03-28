@@ -1,6 +1,6 @@
 # Column Subset Selection for Optimal Experiment Design
 This repository contains MATLAB and Python code for optimal sensor placement using the column subset selection approach. It accompanies the paper
-> Eswar, S., Rao, V., & Saibaba, A. K. (2024). Bayesian D-Optimal Experimental Designs via Column Subset Selection: The Power of Reweighted Sensors. arXiv preprint arXiv:2402.16000.
+> Eswar, S., Rao, V., & Saibaba, A. K. (2024). Bayesian D-Optimal Experimental Designs via Column Subset Selection. Submitted. [arXiv preprint](https://arxiv.org/abs/2402.16000).
 
 ## Requirements
 The [MATLAB](matlab/) code relies on the following packages to setup the test problems.
