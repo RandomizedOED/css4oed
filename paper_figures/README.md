@@ -1,6 +1,6 @@
 # Reproducibility scripts
 Scripts to generate the data in
-> Eswar, S., Rao, V., & Saibaba, A. K. (2024). Bayesian D-Optimal Experimental Designs via Column Subset Selection: The Power of Reweighted Sensors. arXiv preprint arXiv:2402.16000.
+> Eswar, S., Rao, V., & Saibaba, A. K. (2024). Bayesian D-Optimal Experimental Designs via Column Subset Selection. arXiv preprint arXiv:2402.16000.
 
 # Dependencies
 The following Matlab packages/functions are needed to run these scripts.
