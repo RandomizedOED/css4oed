@@ -11,11 +11,11 @@ The [Python](python/) code requires the following packages for test problems.
 1. [PyOED](https://gitlab.com/ahmedattia/pyoed)
 2. [GPy](https://github.com/SheffieldML/GPy)
  
-## Licence
+## License
 To use these codes in your research, please see the [License](LICENSE). If you find our code useful, please consider citing our paper.
 ```bibtex
 @article{eswar2024bayesian,
-  title={Bayesian D-Optimal Experimental Designs via Column Subset Selection: The Power of Reweighted Sensors},
+  title={Bayesian D-Optimal Experimental Designs via Column Subset Selection},
   author={Eswar, Srinivas and Rao, Vishwas and Saibaba, Arvind K},
   journal={arXiv preprint arXiv:2402.16000},
   year={2024}

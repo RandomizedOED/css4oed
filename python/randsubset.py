@@ -343,6 +343,72 @@ def compute_dopt(A):
 #                                                                             #
 ###############################################################################
 
+def greedydopt_mf(A, k):
+  '''
+  Perform greedy column subset selection by maximizing the
+  D-optimal criterion for each column sequentially. It performs these
+  calculations in a matrix-free manner.
+  
+  :param A: The matrix on which to perform CSSP (will be densified)
+  :param k: Number of columns to be selected
+
+  :returns idx  : Indices/columns selected
+  :returns dopt : D-optimality of the selected columns
+  :returns S    : Column selection matrix
+  :returns det  : Determinant of the selected columns
+  '''
+  m, n = A.shape
+  idx  = []
+  cols = list(range(n))
+  det  = 1.0
+  C    = np.zeros((m, k))
+
+  for j in range(k):
+    # Need to compute all norms c^T A^{-1} c
+    # A^{-1} = (I_m + C C.T)^{-1} =  I_m - C (I_k + C.T C)^{-1} C.T = I_m - C B^{-1} C.T
+    B = np.eye(j) + C[:, np.arange(j)].T @ C[:, np.arange(j)]
+
+    maxcol = np.zeros(m)
+    maxval = -np.inf
+    maxidx = 0;
+
+    # Loop through all the remaining columns
+    e_bcol = np.zeros(n)
+
+    for bcol in range(len(cols)):
+      # Extract the column bcol
+      e_bcol[cols[bcol]] = 1.0
+      a_bcol             = A @ e_bcol
+
+      # Compute the norm
+      v_bcol    = C[:, np.arange(j)].T @ a_bcol
+      bcol_norm = np.linalg.norm(a_bcol)**2 - (v_bcol.T @ np.linalg.solve(B, v_bcol))
+
+      # Reset e_bcol
+      e_bcol[cols[bcol]] = 0.0
+      
+      # Check if the column is max norm
+      if (bcol_norm > maxval):
+        maxval = bcol_norm
+        maxidx = bcol
+        maxcol = a_bcol
+
+    # Update stuff
+    idx.append(cols[maxidx])
+    cols = list(set(cols) - set(idx))
+
+    # det(A + v v.T) = det(A)(1 + v.T A^{-1} v)
+    det  = det * (1 + maxval)
+
+    # Update C
+    C[:, j] = maxcol
+
+  # Compute D-Optimality
+  S       = form_selmat(idx, A.shape[1])
+  dopt, _ = compute_dopt(A @ aslinearoperator(S.T))
+
+  return idx, dopt, S.T, det
+
 def greedydopt(A, k):
   '''
   Perform greedy column subset selection by maximizing the
