@@ -5,7 +5,7 @@ function a = compute_aopt(F, Gp)
 % Input:
 %  F - Input operator (will be densified).
 % Output:
-%  d - D-optimality
+%  a - A-optimality
   [~, n] = size(F);
   if (~isa(F, "double"))
     F = F * eye(n);
