@@ -24,14 +24,14 @@ function [p, num_swaps] = dopt_swaps(A, idx, verbose)
     % Find the column with minimum decrease in D-opt
     V       = solve_with_smw(A(:, p), A(:, p));
     udotv   = arrayfun(@(i) A(:, p(i))'*V(:, i), 1:length(p));
-    detdiff = (1 - udotv);
+    detdiff = log(1 - udotv);
 
     % Pick the smallest decrease in determinant
     [detdec, rem_col_idx] = max(detdiff);
 
     % Remove the column
     rem_col = p(rem_col_idx);
-    min_dec = cur_dopt * detdec;
+    min_dec = cur_dopt + detdec;
     p_rem_j = setdiff(p, rem_col);
 
     % Find the column with maximum increase in D-opt
@@ -39,13 +39,13 @@ function [p, num_swaps] = dopt_swaps(A, idx, verbose)
 
     V       = solve_with_smw(A(:, p_rem_j), A(:, choices));
     udotv   = arrayfun(@(i) A(:, choices(i))'*V(:, i), 1:length(choices));
-    detdiff = (1 + udotv);
+    detdiff = log(1 + udotv);
 
     % Pick the largest increase in determinant
     [detinc, sel_col_idx] = max(detdiff);
 
     % Check if a swap is performed
-    swap_dopt = min_dec * detinc;
+    swap_dopt = min_dec + detinc;
     sel_col   = choices(sel_col_idx);
 
     if (swap_dopt > cur_dopt)

@@ -29,10 +29,10 @@ function [p, num_swaps] = dopt_swaps2(A, idx, verbose)
     % Compute all the downdate determinants at once
     V       = solve_with_smw(A(:, p), A(:, p));
     udotv   = arrayfun(@(i) A(:, p(i))'*V(:, i), 1:length(p));
-    detdiff = (1 - udotv);
+    detdiff = log(1 - udotv);
 
     % Downdate determinants
-    detdecs   = cur_dopt * detdiff;
+    detdecs   = cur_dopt + detdiff;
 
     % Find the columns to swap
     for jj = 1:k
@@ -45,13 +45,13 @@ function [p, num_swaps] = dopt_swaps2(A, idx, verbose)
 
       V       = solve_with_smw(A(:, p_rem_jj), A(:, choices));
       udotv   = arrayfun(@(i) A(:, choices(i))'*V(:, i), 1:length(choices));
-      detdiff = (1 + udotv);
+      detdiff = log(1 + udotv);
   
       % Pick the largest difference in determinant
       [detinc, sel_col_idx] = max(detdiff);
   
       % Compute the D-opt difference
-      jj_dopt    = jj_dopt * detinc;
+      jj_dopt    = jj_dopt + detinc;
       jj_sel_col = choices(sel_col_idx);
 
       if (jj_dopt > swap_dopt)
