@@ -1,8 +1,9 @@
-function [p, num_swaps] = aopt_swaps(A, Gp, idx, verbose)
+function [p, num_swaps] = aopt_swaps(A, Gp, idx, f, verbose)
   arguments
     A
     Gp
     idx
+    f (1,1) {mustBeGreaterThanOrEqual(f, 1.0)} = 1.0
     verbose (1,1) {mustBeNumericOrLogical} = false
   end 
   [n, m] = size(A);
@@ -11,20 +12,20 @@ function [p, num_swaps] = aopt_swaps(A, Gp, idx, verbose)
   p = idx;
   k = length(idx);
 
-  % Swap till A-opt increases
-  inc_found = true;
+  % Swap till A-opt decreases
+  dec_found = true;
   num_swaps = 0;
 
   % Cache the cholesky of the prior
   Gp_chol = chol(Gp);
 
-  % Compute current A-opt prox
+  % Compute current A-opt
   cur_aopt = compute_aopt(A(:, p), Gp);
   if (verbose)
     fprintf("Current A-opt: %.4f\n", cur_aopt);
   end
 
-  while(inc_found)
+  while(dec_found)
     % Find the column with minimum increase in A-opt
     V  = solve_with_smw(A(:, p), A(:, p));
     GV = Gp_chol*V;
@@ -58,7 +59,7 @@ function [p, num_swaps] = aopt_swaps(A, Gp, idx, verbose)
     swap_aopt = min_inc - trdec;
     sel_col   = choices(sel_col_idx);
 
-    if (swap_aopt < cur_aopt)
+    if (swap_aopt < cur_aopt/f)
       if (verbose)
         fprintf("Swap Found!\n");
         fprintf("Current A-opt: %.4f\n", cur_aopt);
@@ -73,7 +74,7 @@ function [p, num_swaps] = aopt_swaps(A, Gp, idx, verbose)
       if (verbose)
         fprintf("No swap found.\n");
       end
-      inc_found = false;
+      dec_found = false;
     end
   end
 end

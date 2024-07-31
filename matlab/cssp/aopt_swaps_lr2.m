@@ -1,10 +1,11 @@
-function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
+function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, f, verbose)
   arguments
     Uk
     Sk
     Vk
     Gp
     idx
+    f (1,1) {mustBeGreaterThanOrEqual(f, 1.0)} = 1.0
     verbose (1,1) {mustBeNumericOrLogical} = false
   end 
   %[n, k] = size(Uk);
@@ -18,8 +19,8 @@ function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
   p = idx;
   k = length(idx);
 
-  % Swap till A-opt increases
-  inc_found = true;
+  % Swap till A-opt decreases
+  dec_found = true;
   num_swaps = 0;
 
   % Cache the cholesky of the prior
@@ -27,14 +28,14 @@ function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
   Gpk_chol = Gp_chol*Uk;
   Gpk      = Gpk_chol'*Gpk_chol;
 
-  % Compute current A-opt prox
+  % Compute current A-opt
   cur_aopt = compute_aopt_lr(Wk(:, p), Gp, Gpk);
   if (verbose)
     fprintf("Current A-opt : %.4f\n", cur_aopt);
     %fprintf("Current A-opt (chk) : %.4f\n", compute_aopt(Ak(:,p), Gp));
   end
 
-  while(inc_found)
+  while(dec_found)
     % Tracking the swap
     rem_col   = 0;
     sel_col   = 0;
@@ -86,7 +87,7 @@ function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
       end
     end
     % Swap if needed
-    if (swap_aopt < cur_aopt)
+    if (swap_aopt < cur_aopt/f)
       % Swap found
       p         = [setdiff(p, rem_col) sel_col];
       cur_aopt  = swap_aopt;
@@ -102,7 +103,7 @@ function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
       if (verbose)
         fprintf("No swap found.\n");
       end
-      inc_found = false;
+      dec_found = false;
     end
   end
 end

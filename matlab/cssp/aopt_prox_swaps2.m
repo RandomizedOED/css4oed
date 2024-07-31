@@ -1,7 +1,8 @@
-function [p, num_swaps] = aopt_prox_swaps2(A, idx, verbose)
+function [p, num_swaps] = aopt_prox_swaps2(A, idx, f, verbose)
   arguments
     A
     idx
+    f (1,1) {mustBeGreaterThanOrEqual(f, 1.0)} = 1.0
     verbose (1,1) {mustBeNumericOrLogical} = false
   end 
   [n, m] = size(A);
@@ -10,8 +11,8 @@ function [p, num_swaps] = aopt_prox_swaps2(A, idx, verbose)
   p = idx;
   k = length(idx);
 
-  % Swap till A-opt increases
-  inc_found = true;
+  % Swap till A-opt decreases
+  dec_found = true;
   num_swaps = 0;
 
   % Compute current A-opt prox
@@ -20,7 +21,7 @@ function [p, num_swaps] = aopt_prox_swaps2(A, idx, verbose)
     fprintf("Current A-opt: %.4f\n", cur_aopt_prox);
   end
 
-  while(inc_found)
+  while(dec_found)
     % Tracking the swap
     rem_col        = 0;
     sel_col        = 0;
@@ -70,7 +71,7 @@ function [p, num_swaps] = aopt_prox_swaps2(A, idx, verbose)
       end
     end    
     % Swap if needed
-    if (swap_aopt_prox < cur_aopt_prox)
+    if (swap_aopt_prox < cur_aopt_prox/f)
       if (verbose)
         fprintf("Swap Found!\n");
         fprintf("Current A-opt: %.4f\n", cur_aopt_prox);
@@ -85,7 +86,7 @@ function [p, num_swaps] = aopt_prox_swaps2(A, idx, verbose)
       if (verbose)
         fprintf("No swap found.\n");
       end
-      inc_found = false;
+      dec_found = false;
     end
   end
 end

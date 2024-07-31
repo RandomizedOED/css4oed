@@ -1,10 +1,11 @@
-function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, verbose)
+function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, f, verbose)
   arguments
     Uk
     Sk
     Vk
     Gp
     idx
+    f (1,1) {mustBeGreaterThanOrEqual(f, 1.0)} = 1.0
     verbose (1,1) {mustBeNumericOrLogical} = false
   end 
   %[n, k] = size(Uk);
@@ -18,8 +19,8 @@ function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, verbose)
   p = idx;
   k = length(idx);
 
-  % Swap till A-opt increases
-  inc_found = true;
+  % Swap till A-opt decreases
+  dec_found = true;
   num_swaps = 0;
 
   % Cache the cholesky of the prior
@@ -27,14 +28,14 @@ function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, verbose)
   Gpk_chol = Gp_chol*Uk;
   Gpk      = Gpk_chol'*Gpk_chol;
 
-  % Compute current A-opt prox
+  % Compute current A-opt
   cur_aopt = compute_aopt_lr(Wk(:, p), Gp, Gpk);
   if (verbose)
     fprintf("Current A-opt : %.4f\n", cur_aopt);
     %fprintf("Current A-opt (chk) : %.4f\n", compute_aopt(Ak(:,p), Gp));
   end
 
-  while(inc_found)
+  while(dec_found)
     % Find the column with minimum increase in A-opt
     V  = (eye(k) + Wk(:, p)*Wk(:, p)') \ Wk(:, p);
     GV = Gpk_chol*V;
@@ -68,7 +69,7 @@ function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, verbose)
     swap_aopt = min_inc - trdec;
     sel_col   = choices(sel_col_idx);
 
-    if (swap_aopt < cur_aopt)
+    if (swap_aopt < cur_aopt/f)
       % Swap found
       p         = [setdiff(p, rem_col) sel_col];
       cur_aopt  = swap_aopt;
@@ -84,7 +85,7 @@ function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, verbose)
       if (verbose)
         fprintf("No swap found.\n");
       end
-      inc_found = false;
+      dec_found = false;
     end
   end
 end

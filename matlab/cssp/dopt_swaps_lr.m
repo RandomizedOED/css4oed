@@ -1,9 +1,10 @@
-function [p, num_swaps] = dopt_swaps_lr(Uk, Sk, Vk, idx, verbose)
+function [p, num_swaps] = dopt_swaps_lr(Uk, Sk, Vk, idx, f, verbose)
   arguments
     Uk
     Sk
     Vk
     idx
+    f (1,1) {mustBeGreaterThanOrEqual(f, 1.0)} = 1.0
     verbose (1,1) {mustBeNumericOrLogical} = false
   end 
   %[n, m] = size(A);
@@ -54,7 +55,7 @@ function [p, num_swaps] = dopt_swaps_lr(Uk, Sk, Vk, idx, verbose)
     swap_dopt = min_dec + detinc;
     sel_col   = choices(sel_col_idx);
 
-    if (swap_dopt > cur_dopt)
+    if (swap_dopt > f*cur_dopt)
       if (verbose)
         fprintf("Swap Found!\n");
         fprintf("Current D-opt: %.4f\n", cur_dopt);
