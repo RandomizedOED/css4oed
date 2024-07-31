@@ -64,7 +64,8 @@ function [pidx, dopt, S, Vk] = randcssp(A, k, typ, p, q, l, beta, seed)
     [~, ~, p] = qr(Vk', 'econ', 'vector');
     pidx      = p(1:k);
   elseif (typ == "srrqr")
-    [pidx, ~] = srrqr_select(Vk', k);
+    [p, ~] = srrqr_select(Vk', k);
+    pidx   = p(1:k);
   elseif (typ == "colsample")
     [~, ~, pidx, ~] = colsample(Vk', l, beta);
   elseif (typ == "hybrid")
