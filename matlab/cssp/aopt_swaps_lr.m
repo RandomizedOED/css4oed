@@ -16,7 +16,7 @@ function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, verbose)
 
   % Get the initial column subset
   p = idx;
-  %k = length(idx);
+  k = length(idx);
 
   % Swap till A-opt increases
   inc_found = true;
@@ -36,7 +36,7 @@ function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, verbose)
 
   while(inc_found)
     % Find the column with minimum increase in A-opt
-    V  = solve_with_smw(Wk(:, p), Wk(:, p));
+    V  = (eye(k) + Wk(:, p)*Wk(:, p)') \ Wk(:, p);
     GV = Gpk_chol*V;
 
     Gvnormsq = sum(GV.^2, 1);
@@ -54,7 +54,7 @@ function [p, num_swaps] = aopt_swaps_lr(Uk, Sk, Vk, Gp, idx, verbose)
     % Find the column with maximum decrease in A-opt
     choices = setdiff(1:m, p);
 
-    V  = solve_with_smw(Wk(:, p_rem_j), Wk(:, choices));
+    V  = (eye(k) + Wk(:, p_rem_j)*Wk(:, p_rem_j)') \ Wk(:, choices);
     GV = Gpk_chol*V;
 
     Gvnormsq = sum(GV.^2, 1);

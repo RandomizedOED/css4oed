@@ -8,7 +8,7 @@ function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
     verbose (1,1) {mustBeNumericOrLogical} = false
   end 
   %[n, k] = size(Uk);
-  [m, k] = size(Vk);
+  [m, ~] = size(Vk);
   %Ak = Uk*Sk*Vk';
 
   % Compute the scaled right singular vectors
@@ -16,7 +16,7 @@ function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
 
   % Get the initial column subset
   p = idx;
-  %k = length(idx);
+  k = length(idx);
 
   % Swap till A-opt increases
   inc_found = true;
@@ -41,7 +41,7 @@ function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
     swap_aopt = cur_aopt;
 
     % Compute all the downdate traces at once
-    V  = solve_with_smw(Wk(:, p), Wk(:, p));
+    V  = (eye(k) + Wk(:, p)*Wk(:, p)') \ Wk(:, p);
     GV = Gpk_chol*V;
 
     Gvnormsq = sum(GV.^2, 1);
@@ -60,7 +60,7 @@ function [p, num_swaps] = aopt_swaps_lr2(Uk, Sk, Vk, Gp, idx, verbose)
       % Swap in a column
       choices = setdiff(1:m, p);
 
-      V  = solve_with_smw(Wk(:, p_rem_jj), Wk(:, choices));
+      V  = (eye(k) + Wk(:, p_rem_jj)*Wk(:, p_rem_jj)') \ Wk(:, choices);
       GV = Gpk_chol*V;
 
       Gvnormsq = sum(GV.^2, 1);
