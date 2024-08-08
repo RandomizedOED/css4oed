@@ -73,7 +73,7 @@ function [p, num_swaps] = dopt_swaps_lr2(Uk, Sk, Vk, idx, f, verbose)
       end
     end    
     % Swap if needed
-    if (swap_dopt > f*cur_dopt)
+    if (swap_dopt > cur_dopt + log(f))
       if (verbose)
         fprintf("Swap Found!\n");
         fprintf("Current D-opt: %.4f\n", cur_dopt);

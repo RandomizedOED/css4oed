@@ -49,7 +49,7 @@ function [p, num_swaps] = dopt_swaps(A, idx, f, verbose)
     swap_dopt = min_dec + detinc;
     sel_col   = choices(sel_col_idx);
 
-    if (swap_dopt > f*cur_dopt)
+    if (swap_dopt > cur_dopt + log(f))
       if (verbose)
         fprintf("Swap Found!\n");
         fprintf("Current D-opt: %.4f\n", cur_dopt);
